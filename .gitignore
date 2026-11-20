@@ -41,7 +41,8 @@ wandb/
 *.npz
 
 # Data and eval assets
-assets/
+assets/*.npz
+assets/*.pb
 data/
 coco/
 coco2014/

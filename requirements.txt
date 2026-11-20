@@ -1,5 +1,6 @@
 torch>=2.5.0
 torchvision>=0.20.0
+torchdiffeq>=0.2.3
 accelerate>=1.2.0
 torchmetrics[image]>=1.4.0
 torch-fidelity>=0.3.0

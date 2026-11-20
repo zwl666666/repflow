@@ -34,7 +34,7 @@ case "${1:-train}" in
     ;;
   train)
     torchrun --nnodes=1 --nproc_per_node="$NUM_GPUS" \
-      "$ROOT/jit/main_jit_fd.py" \
+      "$ROOT/jit/train_fd.py" \
       --load_from "$DISTILL_CKPT" \
       --args_json "$DISTILL_ARGS_JSON" \
       --fd_ref_stats "$REF_STATS" \

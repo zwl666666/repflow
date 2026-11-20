@@ -16,7 +16,7 @@ import torch
 import torch.backends.cudnn as cudnn
 
 import util.misc as misc
-from engine_jit_fd import adjust_lr, get_fd_train_step
+from engine_fd import adjust_lr, get_fd_train_step
 from eval_utils import add_eval_args, evaluate_fid_after_epoch, release_eval_cuda_memory
 from fdr6_eval import check_fdr6_assets
 from frechet_distance.judges_jit import (
@@ -27,7 +27,7 @@ from frechet_distance.judges_jit import (
     save_fd_queue_states,
 )
 from frechet_distance.student_repr import build_student_repr_model
-from main_jit_distill import (
+from train_distill import (
     add_architecture_args,
     add_data_args,
     add_flow_args,

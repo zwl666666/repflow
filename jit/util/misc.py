@@ -241,7 +241,7 @@ def init_distributed_mode(args):
     # which trips the NCCL watchdog and aborts the whole process group (SIGABRT),
     # killing training exactly at the eval stage. Use a generous, configurable timeout;
     # the getattr default keeps every entrypoint safe even when its parser lacks the
-    # --dist_timeout_minutes flag (e.g. main_jit.py / main_jit_cons.py).
+    # --dist_timeout_minutes flag (e.g. train.py / train_fd.py).
     dist_timeout = datetime.timedelta(
         minutes=float(getattr(args, "dist_timeout_minutes", 180))
     )

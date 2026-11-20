@@ -13,7 +13,7 @@ CAPTIONS_FILE="$COCO_ROOT/annotations/captions_train2014.json"
 OUTPUT_DIR=${OUTPUT_DIR:-./outputs/sit_mmdit_coco}
 
 accelerate launch --num_processes "$NUM_GPUS" --multi_gpu --mixed_precision bf16 \
-  "$ROOT/sit/train_mmdit_coco_repflow.py" \
+  "$ROOT/sit/train_mmdit_coco.py" \
   --method repflow \
   --image-dir "$IMAGE_DIR" \
   --captions-file "$CAPTIONS_FILE" \

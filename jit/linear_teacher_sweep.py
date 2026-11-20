@@ -27,7 +27,7 @@ from torch.utils.data.distributed import DistributedSampler
 from torchvision import transforms
 from tqdm import tqdm
 
-from linear_jit_student import build_dataset, build_loader
+from linear_student import build_dataset, build_loader
 from model_distill import JiT_models
 from util.crop import center_crop_arr
 

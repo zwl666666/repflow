@@ -32,9 +32,9 @@ Key entry points:
 |---|---|---|
 | SiT, unconditional ImageNet | `sit/train.py` | `recipe/sit_uncond.sh` |
 | SiT, class-conditional ImageNet | `sit/train.py` | `recipe/sit_cond.sh` |
-| MMDiT, conditional COCO (supplementary) | `sit/train_mmdit_coco_repflow.py` | `recipe/sit_mmdit_coco.sh` |
-| JiT, conditional / unconditional distill | `jit/main_jit_distill.py` | `recipe/jit_distill.sh` |
-| JiT, FD post-training | `jit/main_jit_fd.py` | `recipe/jit_fd_posttrain.sh` |
+| MMDiT, conditional COCO (supplementary) | `sit/train_mmdit_coco.py` | `recipe/sit_mmdit_coco.sh` |
+| JiT, conditional / unconditional distill | `jit/train_distill.py` | `recipe/jit_distill.sh` |
+| JiT, FD post-training | `jit/train_fd.py` | `recipe/jit_fd_posttrain.sh` |
 
 ## Installation
 
@@ -127,10 +127,10 @@ cd sit && python sample.py --model SiT-XL/2 --uncondition --ckpt /path/to/latest
 cd sit && python evaluate_coco_mmdit.py --ckpt /path/to/checkpoint.pt
 
 # JiT (pixel space)
-cd jit && python eval_all.py --ckpt /path/to/checkpoint.pth
+cd jit && python evaluate.py --ckpt /path/to/checkpoint.pth
 ```
 
-Linear-probe utilities for representation quality are provided in `sit/linear_student.py` and `jit/linear_jit_student.py`.
+Linear-probe utilities for representation quality are provided in `sit/linear_student.py` and `jit/linear_student.py`.
 
 ## Acknowledgements
 

@@ -686,7 +686,7 @@ def evaluate_linear_probe_after_epoch(
             weight_source,
         )
 
-    from linear_jit_student import run_linear_probe
+    from linear_student import run_linear_probe
 
     student_was_training = probe_student.training
     probe_student.eval()

@@ -15,7 +15,7 @@ import torchvision.transforms as transforms
 from util.crop import center_crop_arr
 import util.misc as misc
 
-from engine_jit_distill import train_one_epoch
+from engine_distill import train_one_epoch
 from eval_utils import (
     add_eval_args,
     evaluate_fid_after_epoch,

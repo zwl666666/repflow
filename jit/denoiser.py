@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from model_jit import JiT_models
+from model import JiT_models
 from torch.cuda.amp import autocast as autocast
 
 class Denoiser(nn.Module):

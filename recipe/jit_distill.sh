@@ -20,7 +20,7 @@ else
 fi
 
 torchrun --nnodes=1 --nproc_per_node="$NUM_GPUS" \
-  "$ROOT/jit/main_jit_distill.py" \
+  "$ROOT/jit/train_distill.py" \
   --training_mode distill \
   --model JiT-XL/16 \
   --student_model "$STUDENT_MODEL" \

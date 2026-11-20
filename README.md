@@ -16,10 +16,9 @@ Weili Zeng &middot; Feng Tian &middot; Shengqi Liu &middot; Yichao Yan
 
 Flow-matching generators learn visual structure through their velocity field, but their internal states are entangled with noise level and network depth, so they do not directly provide a stable visual representation. **RepFlow** learns one from the generator's own evolving computation and uses it to guide generation:
 
-```
-masked clean image ─▶ timestep-free encoder ─▶ timestep-conditioned predictor ─▶ generator states
-                        (student)                                          (across depth & noise level)
-```
+<p align="center">
+  <img src="assets/framework.png" width="90%">
+</p>
 
 - **G2R** (generator &rarr; representation): generator states supervise the encoder and predictor, which must recover those states from a masked clean image without seeing the reference noise or the masked content.
 - **R2G** (representation &rarr; generator): the learned representation is fed back to guide generation, and the improved generator in turn provides better supervision, forming a reciprocal learning process.

@@ -1,30 +1,20 @@
 #!/bin/bash
-# RepFlow distillation on JiT-XL/16 (pixel space).
-# Conditional by default; UNCONDITION=1 switches to the unconditional variant
-# (JiT-B/16 student, as used in the paper).
+# RepFlow distillation on JiT-XL/16 (pixel space), class-conditional ImageNet 256.
+# Teacher JiT-XL/16, student JiT-L/16, 4-layer concat projector.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NUM_GPUS=${NUM_GPUS:-8}
 IMAGENET_PATH=${IMAGENET_PATH:?set IMAGENET_PATH to ILSVRC/Data/CLS-LOC/train}
-RESULTS_DIR=${RESULTS_DIR:-./outputs/jit_distill}
+RESULTS_DIR=${RESULTS_DIR:-./outputs/jit_cond}
 CHECKPOINT_ROOT=${CHECKPOINT_ROOT:-${RESULTS_DIR}/checkpoints}
-
-UNCONDITION=${UNCONDITION:-0}
-if [[ "$UNCONDITION" == "1" ]]; then
-  STUDENT_MODEL="JiT-B/16"
-  UNCOND_FLAG=(--uncondition)
-else
-  STUDENT_MODEL="JiT-L/16"
-  UNCOND_FLAG=()
-fi
 
 torchrun --nnodes=1 --nproc_per_node="$NUM_GPUS" \
   "$ROOT/jit/train_distill.py" \
   --training_mode distill \
   --model JiT-XL/16 \
-  --student_model "$STUDENT_MODEL" \
-  --projector_model "$STUDENT_MODEL" \
+  --student_model JiT-L/16 \
+  --projector_model JiT-L/16 \
   --teacher_feature_layers "5,12,19,26" \
   --teacher_cons_layer 7 \
   --student_mask_ratio 0.75 \
@@ -38,7 +28,6 @@ torchrun --nnodes=1 --nproc_per_node="$NUM_GPUS" \
   --distill_loss_weight "${DISTILL_LOSS_WEIGHT:-1.0}" \
   --distill_mse_weight "${DISTILL_MSE_WEIGHT:-1.0}" \
   --distill_cosine_weight "${DISTILL_COSINE_WEIGHT:-0.1}" \
-  "${UNCOND_FLAG[@]}" \
   --P_mean -0.8 --P_std 0.8 \
   --img_size 256 --noise_scale 1.0 \
   --global_batch_size "${GLOBAL_BATCH_SIZE:-1024}" \

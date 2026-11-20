@@ -33,7 +33,8 @@ No externally pretrained representation teacher is used. Across the two uncondit
 |:---|:---|:---|
 | SiT &middot; unconditional ImageNet 256 | [`sit/train.py`](sit/train.py) | [`recipe/sit_uncond.sh`](recipe/sit_uncond.sh) |
 | SiT &middot; class-conditional ImageNet 256 | [`sit/train.py`](sit/train.py) | [`recipe/sit_cond.sh`](recipe/sit_cond.sh) |
-| JiT &middot; conditional / unconditional distill | [`jit/train_distill.py`](jit/train_distill.py) | [`recipe/jit_distill.sh`](recipe/jit_distill.sh) |
+| JiT &middot; unconditional ImageNet 256 | [`jit/train_distill.py`](jit/train_distill.py) | [`recipe/jit_uncond.sh`](recipe/jit_uncond.sh) |
+| JiT &middot; class-conditional ImageNet 256 | [`jit/train_distill.py`](jit/train_distill.py) | [`recipe/jit_cond.sh`](recipe/jit_cond.sh) |
 | JiT &middot; FD post-training | [`jit/train_fd.py`](jit/train_fd.py) | [`recipe/jit_fd_posttrain.sh`](recipe/jit_fd_posttrain.sh) |
 | MMDiT &middot; conditional COCO 256 (supplementary) | [`sit/train_mmdit_coco.py`](sit/train_mmdit_coco.py) | [`recipe/sit_mmdit_coco.sh`](recipe/sit_mmdit_coco.sh) |
 
@@ -99,18 +100,23 @@ The same backbone and student, with ImageNet class conditioning (dropout 0.1) an
 bash recipe/sit_cond.sh
 ```
 
-### 3. JiT, conditional / unconditional distillation
+### 3. JiT, unconditional ImageNet 256
 
-JiT-XL/16 generator with a JiT-L/16 student and a 4-layer concat projector. Set `UNCONDITION=1` for the unconditional variant, which also switches the student to JiT-B/16.
+JiT-XL/16 generator with a JiT-B/16 student and a 4-layer concat projector.
 
 ```bash
-bash recipe/jit_distill.sh
-
-# unconditional variant
-UNCONDITION=1 bash recipe/jit_distill.sh
+bash recipe/jit_uncond.sh
 ```
 
-### 4. JiT, FD post-training
+### 4. JiT, class-conditional ImageNet 256
+
+Same JiT-XL/16 generator with a JiT-L/16 student.
+
+```bash
+bash recipe/jit_cond.sh
+```
+
+### 5. JiT, FD post-training
 
 After distillation, the student representation becomes a Fr&eacute;chet-Distance judge and only the generator is updated. Compute the reference statistics once, then post-train:
 
@@ -119,7 +125,7 @@ bash recipe/jit_fd_posttrain.sh compute_stats
 bash recipe/jit_fd_posttrain.sh train
 ```
 
-### 5. Supplementary: MMDiT on conditional COCO 256
+### 6. Supplementary: MMDiT on conditional COCO 256
 
 A compact MMDiT (depth 24, width 768) with a frozen CLIP text encoder and a frozen 4-channel VAE, trained with G2R + 0.1 &times; R2G.
 

@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+.Python
+build/
+dist/
+*.egg-info/
+
+# Environments
+.env
+.venv
+venv/
+env/
+.conda/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.cache/
+
+# Training artifacts
+checkpoints/
+output/
+outputs/
+runs/
+results/
+wandb/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.npz
+
+# Data and eval assets
+assets/
+data/
+coco/
+coco2014/
+sd-vae-ft-ema/
+*.tar
+*.tar.gz
+*.zip
+
+# Logs
+logs/
+*.log
+*.pid
+temp/
+tmp/

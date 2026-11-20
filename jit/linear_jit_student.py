@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import os
+import PIL.Image as Image
 from contextlib import nullcontext
-from typing import Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import torch
 import torch.distributed as dist
@@ -15,7 +16,6 @@ from torch.utils.data.distributed import DistributedSampler
 from torchvision import transforms
 from tqdm import tqdm
 
-from s3_imagefolder import LocalLabelFileDataset, S3ImageFolder, S3LabelFileDataset
 from util.crop import center_crop_arr
 
 
@@ -45,23 +45,49 @@ def _avg_pool_patches(act: torch.Tensor) -> torch.Tensor:
     return act.mean(dim=2)
 
 
-def build_dataset(
-    root: str,
-    label_file: Optional[str],
-    transform,
-    s3_endpoint: Optional[str] = None,
-    s3_region: str = "us-east-1",
-    petrel_conf: Optional[str] = None,
-):
-    if root.startswith("s3://"):
-        if label_file is not None:
-            return S3LabelFileDataset(
-                s3_path=root,
-                label_file=label_file,
-                transform=transform,
-                petrel_conf=petrel_conf,
-            )
-        return S3ImageFolder(root, transform=transform, petrel_conf=petrel_conf)
+class LocalLabelFileDataset(torch.utils.data.Dataset):
+    """Image dataset driven by a text label file ("<relative/path> <label>" per line)."""
+
+    def __init__(self, root: str, label_file: str, transform: Optional[Callable] = None):
+        self.root = root.rstrip("/")
+        self.transform = transform
+        if not os.path.isdir(self.root):
+            raise FileNotFoundError(f"Local data root not found: {self.root}")
+        if not os.path.isfile(label_file):
+            raise FileNotFoundError(f"Label file not found: {label_file}")
+
+        self.samples: List[Tuple[str, int]] = []
+        with open(label_file, "r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                rel_path, label = line.rsplit(maxsplit=1)
+                self.samples.append((rel_path, int(label)))
+        if not self.samples:
+            raise RuntimeError(f"No samples found in label file: {label_file}")
+
+    def __len__(self) -> int:
+        return len(self.samples)
+
+    def __getitem__(self, index: int):
+        rel_path, label = self.samples[index]
+        image_path = os.path.join(self.root, rel_path)
+        if not os.path.isfile(image_path):
+            raise FileNotFoundError(f"Image not found: {image_path}")
+        image = Image.open(image_path).convert("RGB")
+        if self.transform is not None:
+            image = self.transform(image)
+        return image, label
+
+
+def build_dataset(root: str, label_file: Optional[str], transform):
+    if not os.path.isdir(root):
+        raise FileNotFoundError(f"Local data root not found: {root}")
+    if label_file is not None:
+        return LocalLabelFileDataset(root=root, label_file=label_file, transform=transform)
+    from torchvision.datasets import ImageFolder
+    return ImageFolder(root, transform=transform)
 
     if not os.path.isdir(root):
         raise FileNotFoundError(f"Local data root not found: {root}")
@@ -256,13 +282,11 @@ def run_linear_probe(args, device, local_rank: int, student=None, use_ddp: bool 
         args.train_data_path,
         args.train_label_file,
         transform_train,
-        petrel_conf=getattr(args, "petrel_conf", None),
     )
     val_set = build_dataset(
         args.val_data_path,
         args.val_label_file,
         transform_val,
-        petrel_conf=getattr(args, "petrel_conf", None),
     )
     train_loader, train_sampler = build_loader(
         train_set,

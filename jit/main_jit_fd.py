@@ -53,7 +53,6 @@ from train_utils import (
     setup_experiment_directory,
     setup_training_paths,
 )
-from util.s3_dataset import add_s3_dataset_args
 
 logger = logging.getLogger("jit_fd")
 

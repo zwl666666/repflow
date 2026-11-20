@@ -1,30 +1,41 @@
 #!/bin/bash
-# RepFlow on a compact MMDiT, text-conditional COCO 256 (frozen CLIP + frozen VAE).
+# RepFlow on SiT-XL/2, class-conditional ImageNet 256, with a ViT-B student.
+# Classifier-free guidance is enabled during evaluation (CFG=4).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NUM_GPUS=${NUM_GPUS:-8}
-COCO_ROOT=${COCO_ROOT:?set COCO_ROOT to your coco2014 directory}
-CLIP_MODEL_PATH=${CLIP_MODEL_PATH:?set CLIP_MODEL_PATH to a CLIP-ViT-L/14 checkpoint}
+IMAGENET_PATH=${IMAGENET_PATH:?set IMAGENET_PATH to ILSVRC/Data/CLS-LOC/train}
+RESULTS_DIR=${RESULTS_DIR:-./outputs/sit_cond}
+CKPT_DIR=${CKPT_DIR:-${RESULTS_DIR}/checkpoints}
 
-IMAGE_DIR="$COCO_ROOT/train2014"
-CAPTIONS_FILE="$COCO_ROOT/annotations/captions_train2014.json"
-OUTPUT_DIR=${OUTPUT_DIR:-./outputs/sit_cond}
-
-accelerate launch --num_processes "$NUM_GPUS" --multi_gpu --mixed_precision bf16 \
-  "$ROOT/sit/train_mmdit_coco_repflow.py" \
-  --method repflow \
-  --image-dir "$IMAGE_DIR" \
-  --captions-file "$CAPTIONS_FILE" \
-  --output-dir "$OUTPUT_DIR" \
-  --resolution 256 \
-  --global-batch-size "${GLOBAL_BATCH_SIZE:-256}" \
-  --micro-batch-size "${MICRO_BATCH_SIZE:-32}" \
+torchrun --nnodes=1 --nproc_per_node="$NUM_GPUS" \
+  "$ROOT/sit/train.py" \
+  --model SiT-XL/2 \
+  --data-path "$IMAGENET_PATH" \
+  --image-size 256 \
+  --global-batch-size "${GLOBAL_BATCH_SIZE:-1024}" \
   --num-workers "${NUM_WORKERS:-8}" \
-  --max-train-steps "${MAX_TRAIN_STEPS:-150000}" \
-  --checkpoint-every "${CHECKPOINT_EVERY:-50000}" \
-  --save-every "${SAVE_EVERY:-50000}" \
-  --log-every 100 \
   --lr "${LR:-1e-4}" \
-  --clip-model "$CLIP_MODEL_PATH" \
-  --caption-dropout 0.1
+  --weight-decay 0 \
+  --class-dropout-prob "${CLASS_DROPOUT_PROB:-0.1}" \
+  --ckpt-every-epoch "${CKPT_EVERY_EPOCH:-50}" \
+  --epochs "${EPOCHS:-50}" \
+  --bf16 \
+  --student-depth 12 \
+  --student-hidden-size 768 \
+  --student-feature-layers "5,12,19,26" \
+  --student-loss-weight 1.0 \
+  --student-align-cosine-weight 0.0 \
+  --student-align-teacher-layer 7 \
+  --student-mask-ratio 0.75 \
+  --student-use-mask \
+  --student-direct-image-input \
+  --student-clean-ema \
+  --projector-hidden-size 384 \
+  --projector-depth 10 \
+  --projector-mlp-ratio 4.0 \
+  --repa-proj-coeff 0 \
+  --results-dir "$RESULTS_DIR" \
+  --ckpt-dir "$CKPT_DIR" \
+  --eval-cfg-scale "${EVAL_CFG_SCALE:-4.0}"

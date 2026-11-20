@@ -57,7 +57,6 @@ from repa_utils import (
     repa_neg_cosine_loss,
 )
 import wandb_utils
-from s3_imagefolder import S3ImageFolder
 from linear_student import run_linear_probe
 
 
@@ -393,37 +392,10 @@ def build_dataloader(args, rank):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], inplace=True)
     ])
-    if args.data_path.startswith("s3://"):
-        petrel_conf = getattr(args, "petrel_conf", None)
-        if args.s3_index_cache:
-            if rank == 0:
-                if not os.path.isfile(args.s3_index_cache):
-                    idx = S3ImageFolder.build_index(
-                        args.data_path, petrel_conf=petrel_conf
-                    )
-                    d = os.path.dirname(args.s3_index_cache)
-                    if d:
-                        os.makedirs(d, exist_ok=True)
-                    with open(args.s3_index_cache, "wb") as f:
-                        pickle.dump(idx, f, protocol=pickle.HIGHEST_PROTOCOL)
-            dist.barrier()
-            with open(args.s3_index_cache, "rb") as f:
-                idx = pickle.load(f)
-            dataset = S3ImageFolder(
-                args.data_path,
-                transform=transform,
-                index=idx,
-                petrel_conf=petrel_conf,
-            )
-        else:
-            dataset = S3ImageFolder(
-                args.data_path, transform=transform, petrel_conf=petrel_conf
-            )
-    else:
-        if not os.path.isdir(args.data_path):
-            raise FileNotFoundError(f"Local --data-path not found: {args.data_path}")
-        from torchvision.datasets import ImageFolder
-        dataset = ImageFolder(args.data_path, transform=transform)
+    if not os.path.isdir(args.data_path):
+        raise FileNotFoundError(f"Local --data-path not found: {args.data_path}")
+    from torchvision.datasets import ImageFolder
+    dataset = ImageFolder(args.data_path, transform=transform)
     sampler = DistributedSampler(
         dataset,
         num_replicas=world_size,
@@ -822,9 +794,6 @@ def _build_linear_probe_args(args, state):
         val_data_path=args.linear_val_data_path,
         train_label_file=args.linear_train_label_file,
         val_label_file=args.linear_val_label_file,
-        s3_endpoint=args.s3_endpoint,
-        s3_region=args.s3_region,
-        petrel_conf=getattr(args, "petrel_conf", None),
         epochs=args.linear_epochs,
         batch_size=per_gpu_batch_size,
         lr=args.linear_lr,
@@ -1535,31 +1504,7 @@ def add_data_args(parser):
         "--data-path",
         type=str,
         required=True,
-        help="ImageNet train root: local CLS-LOC/train dir or s3://.../CLS-LOC/train prefix.",
-    )
-    parser.add_argument(
-        "--s3-endpoint",
-        type=str,
-        default=None,
-        help="Deprecated (ignored). S3 reads use Petrel SDK via PETRELOSS_CONF / cfs/petreloss.conf.",
-    )
-    parser.add_argument(
-        "--s3-region",
-        type=str,
-        default="us-east-1",
-        help="Deprecated (ignored). Kept for backward-compatible CLI.",
-    )
-    parser.add_argument(
-        "--s3-index-cache",
-        type=str,
-        default=None,
-        help="Optional shared filesystem path to a pickle index; rank 0 builds once, all ranks load (recommended for multi-GPU).",
-    )
-    parser.add_argument(
-        "--petrel-conf",
-        type=str,
-        default=None,
-        help="Path to petreloss.conf; default PETRELOSS_CONF or $ZWL_ROOT/cfs/petreloss.conf.",
+        help="Local ImageNet train root (CLS-LOC/train, ImageFolder layout).",
     )
     parser.add_argument("--results-dir", type=str, default="results")
     parser.add_argument(
@@ -1660,7 +1605,7 @@ def add_training_args(parser):
         "--linear-train-data-path",
         type=str,
         default=None,
-        help="S3 prefix for linear probe training set (s3://.../train).",
+        help="Local image root for linear probe training set.",
     )
     parser.add_argument(
         "--linear-val-data-path",

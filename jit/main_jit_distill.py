@@ -14,7 +14,6 @@ import torchvision.transforms as transforms
 
 from util.crop import center_crop_arr
 import util.misc as misc
-from util.s3_dataset import add_s3_dataset_args, build_imagenet_train_folder
 
 from engine_jit_distill import train_one_epoch
 from eval_utils import (
@@ -125,10 +124,9 @@ def add_data_args(parser):
         "--data_path",
         default="./data/imagenet",
         type=str,
-        help="Local root (<path>/imagenet) or full s3://.../CLS-LOC/train prefix.",
+        help="Local ImageNet train root (CLS-LOC/train, ImageFolder layout).",
     )
     group.add_argument("--class_num", default=1000, type=int)
-    add_s3_dataset_args(parser)
     group.add_argument("--num_workers", default=12, type=int)
     group.add_argument(
         "--pin_mem",
@@ -180,7 +178,10 @@ def get_args_parser():
 
 
 def build_dataloader(args, transform_train):
-    dataset_train = build_imagenet_train_folder(args, transform_train, local_subdir="imagenet")
+    if not os.path.isdir(args.data_path):
+        raise FileNotFoundError(f"Local --data_path not found: {args.data_path}")
+    from torchvision.datasets import ImageFolder
+    dataset_train = ImageFolder(args.data_path, transform_train)
 
     sampler_train = torch.utils.data.DistributedSampler(
         dataset_train,

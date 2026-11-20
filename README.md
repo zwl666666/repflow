@@ -15,7 +15,7 @@ Flow-matching generators are trained only through their generated velocity field
 
 The same recipe is realized on two very different backbones to show that the effect is architectural:
 
-- **`sit/`** - latent-space flow models on ImageNet 256 (unconditional SiT-XL/2) and COCO 256 (text-conditional MMDiT).
+- **`sit/`** - latent-space flow models on ImageNet 256 (class-conditional and unconditional SiT-XL/2), plus a supplementary text-conditional COCO MMDiT.
 - **`jit/`** - pixel-space flow models on ImageNet 256 (class-conditional and unconditional JiT-XL/16), including the FD post-training entry point.
 
 ## Repository Layout
@@ -31,7 +31,8 @@ Key entry points:
 | Experiment | Trainer | Recipe |
 |---|---|---|
 | SiT, unconditional ImageNet | `sit/train.py` | `recipe/sit_uncond.sh` |
-| MMDiT, conditional COCO | `sit/train_mmdit_coco_repflow.py` | `recipe/sit_cond.sh` |
+| SiT, class-conditional ImageNet | `sit/train.py` | `recipe/sit_cond.sh` |
+| MMDiT, conditional COCO (supplementary) | `sit/train_mmdit_coco_repflow.py` | `recipe/sit_mmdit_coco.sh` |
 | JiT, conditional / unconditional distill | `jit/main_jit_distill.py` | `recipe/jit_distill.sh` |
 | JiT, FD post-training | `jit/main_jit_fd.py` | `recipe/jit_fd_posttrain.sh` |
 
@@ -78,9 +79,9 @@ Trains SiT-XL/2 with a ViT-B student, patch masking (0.75), and a 10-block proje
 bash recipe/sit_uncond.sh
 ```
 
-### 2. MMDiT - Conditional COCO 256
+### 2. SiT - Class-Conditional ImageNet 256
 
-Trains a compact MMDiT (depth 24, width 768) with a frozen CLIP text encoder and a frozen 4-channel VAE, using G2R + 0.1 x R2G.
+The same SiT-XL/2 backbone with ImageNet class conditioning and classifier-free guidance (CFG=4) at evaluation.
 
 ```bash
 bash recipe/sit_cond.sh
@@ -104,6 +105,14 @@ After distillation, the student representation is used as a Fréchet-Distance ju
 ```bash
 bash recipe/jit_fd_posttrain.sh compute_stats
 bash recipe/jit_fd_posttrain.sh train
+```
+
+### 5. Supplementary - MMDiT on Conditional COCO 256
+
+Trains a compact MMDiT (depth 24, width 768) with a frozen CLIP text encoder and a frozen 4-channel VAE, using G2R + 0.1 x R2G.
+
+```bash
+bash recipe/sit_mmdit_coco.sh
 ```
 
 ## Evaluation

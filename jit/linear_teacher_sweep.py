@@ -386,7 +386,6 @@ def main():
     parser.add_argument("--val-data-path", required=True)
     parser.add_argument("--train-label-file", required=True)
     parser.add_argument("--val-label-file", required=True)
-    parser.add_argument("--petrel-conf", default=os.environ.get("PETRELOSS_CONF"))
     parser.add_argument("--image-size", type=int, default=256)
     parser.add_argument("--num-classes", type=int, default=1000)
     parser.add_argument("--null-class", type=int, default=1000)
@@ -437,8 +436,8 @@ def main():
         transforms.Lambda(lambda img: center_crop_arr(img, args.image_size)),
         transforms.PILToTensor(),
     ])
-    train_set = build_dataset(args.train_data_path, args.train_label_file, transform_train, petrel_conf=args.petrel_conf)
-    val_set = build_dataset(args.val_data_path, args.val_label_file, transform_val, petrel_conf=args.petrel_conf)
+    train_set = build_dataset(args.train_data_path, args.train_label_file, transform_train)
+    val_set = build_dataset(args.val_data_path, args.val_label_file, transform_val)
     train_loader, train_sampler = build_loader(train_set, per_gpu_batch, True, args.num_workers, True)
     val_loader, _ = build_loader(val_set, per_gpu_batch, False, args.num_workers, True)
 

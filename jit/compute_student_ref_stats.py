@@ -23,7 +23,6 @@ from train_utils import (
 )
 from util import misc
 from util.crop import center_crop_arr
-from util.s3_dataset import add_s3_dataset_args, build_imagenet_train_folder
 
 logger = logging.getLogger("jit_fd")
 
@@ -61,7 +60,6 @@ def parse_args():
     )
     parser.add_argument("--dist_on_itp", action="store_true")
     parser.add_argument("--dist_url", default="env://")
-    add_s3_dataset_args(parser)
     return parser.parse_args()
 
 
@@ -89,9 +87,6 @@ def main():
     arch_args.device = "cuda"
     arch_args.distributed = misc.is_dist_avail_and_initialized()
     arch_args.data_path = args.data_path
-    arch_args.s3_endpoint = getattr(args, "s3_endpoint", None)
-    arch_args.s3_region = getattr(args, "s3_region", "us-east-1")
-    arch_args.s3_index_cache = getattr(args, "s3_index_cache", None)
     arch_args.skip_projector = not args.fd_use_projector
 
     rank = misc.get_rank()
@@ -134,7 +129,10 @@ def main():
         transforms.Lambda(lambda img: center_crop_arr(img, args.img_size)),
         transforms.PILToTensor(),
     ])
-    dataset = build_imagenet_train_folder(arch_args, transform, local_subdir="imagenet")
+    if not os.path.isdir(args.data_path):
+        raise FileNotFoundError(f"Local --data_path not found: {args.data_path}")
+    from torchvision.datasets import ImageFolder
+    dataset = ImageFolder(args.data_path, transform)
     total_available = len(dataset)
     if args.num_images is not None and args.num_images < total_available:
         dataset = torch.utils.data.Subset(dataset, list(range(args.num_images)))
